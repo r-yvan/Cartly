@@ -1,5 +1,5 @@
 // This is your Prisma schema file,
-// learn more about it in the docs: https://prisma.io/docs/concepts/components/prisma-schema
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
@@ -30,6 +30,8 @@ model User {
   wishlist      Wishlist?
   products      Product[]      // Products created by seller
   activityLogs  ActivityLog[]
+  notifications Notification[]
+  store         Store?         // Seller's store
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
@@ -88,6 +90,24 @@ model UserProfile {
   gender      String?
   bio         String?
   avatar      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Seller Store
+model Store {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  logo        String?
+  banner      String?
+  address     String?
+  phone       String?
+  email       String?
+  isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -248,11 +268,14 @@ model Order {
   paymentMethod    String
   paymentStatus    PaymentStatus @default(PENDING)
   items            OrderItem[]
+  tracking         OrderTracking?
   trackingNumber   String?
   trackingCompany  String?
   trackingUrl      String?
   notes            String?
   customerNote     String?
+  estimatedDelivery DateTime?
+  deliveredAt      DateTime?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 
@@ -263,6 +286,8 @@ enum OrderStatus {
   PENDING
   PROCESSING
   SHIPPED
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
   DELIVERED
   CANCELLED
   REFUNDED
@@ -293,6 +318,32 @@ model OrderItem {
   @@index([orderId])
   @@index([productId])
   @@index([variantId])
+}
+
+// Order Tracking
+model OrderTracking {
+  id              String   @id @default(uuid())
+  orderId         String   @unique
+  order           Order    @relation(fields: [orderId], references: [id])
+  currentLocation Json     // { lat, lng, address }
+  destination     Json     // { lat, lng, address }
+  status          String
+  estimatedTime   DateTime?
+  updates         OrderTrackingUpdate[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model OrderTrackingUpdate {
+  id          String        @id @default(uuid())
+  trackingId  String
+  tracking    OrderTracking @relation(fields: [trackingId], references: [id])
+  location    Json          // { lat, lng, address }
+  status      String
+  description String?
+  timestamp   DateTime      @default(now())
+
+  @@index([trackingId])
 }
 
 // Reviews and Ratings
@@ -339,6 +390,33 @@ model Address {
 enum AddressType {
   SHIPPING
   BILLING
+}
+
+// Notifications
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      NotificationType
+  title     String
+  message   String   @db.Text
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+enum NotificationType {
+  ORDER_PLACED
+  ORDER_SHIPPED
+  ORDER_DELIVERED
+  PRODUCT_APPROVED
+  PRODUCT_REJECTED
+  LOW_STOCK
+  NEW_REVIEW
+  PAYMENT_RECEIVED
+  SYSTEM
 }
 
 // User Activity Log
@@ -403,4 +481,3 @@ model WishlistItem {
   @@index([productId])
   @@index([variantId])
 }
-
