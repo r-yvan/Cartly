@@ -1,7 +1,5 @@
-import React from "react";
+import { DashboardShell } from "@/components/dashboard";
 
-const BuyerInterfaceLayout = () => {
-  return <div>BuyerInterfaceLayout</div>;
-};
-
-export default BuyerInterfaceLayout;
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return <DashboardShell area="buyer">{children}</DashboardShell>;
+}

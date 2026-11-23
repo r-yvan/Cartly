@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cartly
 
-## Getting Started
+A multi-seller marketplace built with Next.js 15 (App Router), Prisma, PostgreSQL and NextAuth.
 
-First, run the development server:
+- **Storefront**: home, searchable catalog, product pages, cart, checkout (pay on delivery), order tracking
+- **Buyers**: account overview and order history with a tracking timeline
+- **Sellers**: open a store, manage products and stock, fulfil orders, revenue dashboard
+- **Admins**: platform analytics, user roles, product moderation, all orders
+- **Auth**: email + password and Google OAuth (GitHub optional)
+- **UI**: Satoshi typeface, light and dark themes
+
+## Run locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun install
+cp .env.example .env        # then fill in the values
+bun run db:migrate          # create the tables
+bun run db:seed             # optional: demo store with 18 products
+bun run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+To make yourself an admin, sign up in the app first, then run
+`ADMIN_EMAIL=you@example.com bun run db:seed`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy to Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Create a hosted PostgreSQL database (Neon, Supabase, Vercel Postgres…).
+   A `localhost` database cannot be reached from Vercel.
+2. In the Vercel project, set these environment variables:
+   `DATABASE_URL`, `NEXTAUTH_URL` (your production URL), `NEXTAUTH_SECRET`,
+   `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
+3. Run the migrations against that database once:
+   `DATABASE_URL="<hosted url>" bun run db:migrate` (and `db:seed` if you want demo data).
+4. In Google Cloud Console → Credentials → your OAuth client, add the redirect URI
+   `https://<your-domain>/api/auth/callback/google`.
+5. Deploy. The build runs `prisma generate` automatically.
 
-## Learn More
+## Project layout
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Path | What lives there |
+| --- | --- |
+| `app/(store)` | Public storefront, cart, checkout, order pages |
+| `app/buyer`, `app/seller`, `app/admin` | Role dashboards |
+| `app/api` | JSON API (auth, catalog, cart, orders, seller, admin) |
+| `components` | Shared UI |
+| `lib` | Auth config, catalog queries, helpers |
+| `prisma` | Schema, migrations, seed script |
+| `middleware.ts` | Route protection by role |

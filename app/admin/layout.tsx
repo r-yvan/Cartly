@@ -1,7 +1,5 @@
-import React from "react";
+import { DashboardShell } from "@/components/dashboard";
 
-const AdminInterfaceLayout = () => {
-  return <div>AdminInterfaceLayout</div>;
-};
-
-export default AdminInterfaceLayout;
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return <DashboardShell area="admin">{children}</DashboardShell>;
+}
